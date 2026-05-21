@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+from collections.abc import Coroutine
 from pathlib import Path
 
 import click
@@ -11,9 +12,6 @@ try:
     logger.add(LOG_DIR / 'log.log', rotation='10 MB')
 except Exception as e:  # noqa: BLE001
     logger.error(f'Failed to set up logger directory: {e}')
-
-if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 @click.command()
@@ -99,10 +97,17 @@ def main(
     if tool_regex:
         logger.warning('The [--tool-regex] option is deprecated and will be removed in future versions.')
 
+    def _run_with_loop_factory(coro: Coroutine) -> None:
+        if sys.platform == 'win32':
+            with asyncio.Runner(loop_factory=asyncio.SelectorEventLoop) as runner:
+                return runner.run(coro)
+        else:
+            return asyncio.run(coro)
+
     if transport == 'stdio':
-        asyncio.run(mcp.run_async(transport=transport))
+        _run_with_loop_factory(mcp.run_async(transport=transport))
     elif transport in ('sse', 'streamable-http'):
-        asyncio.run(mcp.run_async(transport=transport, host=host, port=port))
+        _run_with_loop_factory(mcp.run_async(transport=transport, host=host, port=port))
 
 
 if __name__ == '__main__':
