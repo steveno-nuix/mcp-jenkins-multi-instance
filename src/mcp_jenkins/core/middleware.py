@@ -27,18 +27,24 @@ class AuthMiddleware:
         jenkins_url_bytes = headers.get(b'x-jenkins-url')
         jenkins_username_bytes = headers.get(b'x-jenkins-username')
         jenkins_password_bytes = headers.get(b'x-jenkins-password')
+        jenkins_instance_bytes = headers.get(b'x-jenkins-instance')
 
         # Convert bytes to strings (ASGI headers are always bytes)
         jenkins_url = jenkins_url_bytes.decode('latin-1') if jenkins_url_bytes else None
         jenkins_username = jenkins_username_bytes.decode('latin-1') if jenkins_username_bytes else None
         jenkins_password = jenkins_password_bytes.decode('latin-1') if jenkins_password_bytes else None
+        jenkins_instance = jenkins_instance_bytes.decode('latin-1') if jenkins_instance_bytes else None
 
         # Store in scope state (modify in place so Starlette Request can access it)
         scope_copy['state']['jenkins_url'] = jenkins_url
         scope_copy['state']['jenkins_username'] = jenkins_username
         scope_copy['state']['jenkins_password'] = jenkins_password
+        scope_copy['state']['jenkins_instance'] = jenkins_instance
 
-        logger.debug(f'[JENKINS-AUTH-MIDDLEWARE] Captured headers - url: {jenkins_url}, username: {jenkins_username}')
+        logger.debug(
+            f'[JENKINS-AUTH-MIDDLEWARE] Captured headers - url: {jenkins_url}, '
+            f'username: {jenkins_username}, instance: {jenkins_instance}'
+        )
 
         # Call the next application with modified scope and safe send wrapper
         await self.app(scope_copy, receive, send)

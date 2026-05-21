@@ -1,5 +1,6 @@
 import pytest
 
+from mcp_jenkins.core.config import JenkinsInstanceConfig, MultiInstanceConfig
 from mcp_jenkins.core.lifespan import jenkins, lifespan
 from mcp_jenkins.jenkins import Jenkins
 
@@ -28,6 +29,7 @@ class TestLifespan:
                 'jenkins_timeout': '5',
                 'jenkins_verify_ssl': 'true',
                 'jenkins_session_singleton': 'true',
+                'MCP_JENKINS_CONFIG': None,
             }
             return env.get(key, default)
 
@@ -39,6 +41,7 @@ class TestLifespan:
             assert context.jenkins_timeout == 5
             assert context.jenkins_verify_ssl is True
             assert context.jenkins_session_singleton is True
+            assert context.instances is None
 
 
 class TestJenkins:
@@ -61,6 +64,7 @@ class TestJenkins:
                     jenkins_timeout=5,
                     jenkins_verify_ssl=True,
                     jenkins_session_singleton=False,
+                    instances=None,
                 )
             )
         )
@@ -125,3 +129,110 @@ class TestJenkins:
 
         assert jenkins(mock_ctx) == existing_jenkins
         mock_jenkins.assert_not_called()
+
+
+class TestJenkinsMultiInstance:
+    @pytest.fixture(autouse=True)
+    def mock_jenkins_cls(self, mocker):
+        return mocker.patch('mcp_jenkins.core.lifespan.Jenkins')
+
+    @pytest.fixture
+    def mock_get_http_request(self, mocker):
+        return mocker.patch('mcp_jenkins.core.lifespan.get_http_request')
+
+    @pytest.fixture
+    def multi_config(self):
+        return MultiInstanceConfig(
+            default='prod',
+            instances={
+                'prod': JenkinsInstanceConfig(
+                    url='https://prod.example.com', username='prod_user', password='prod_pass'
+                ),
+                'dev': JenkinsInstanceConfig(
+                    url='https://dev.example.com', username='dev_user', password='dev_pass', timeout=10
+                ),
+            },
+        )
+
+    @pytest.fixture
+    def mock_ctx(self, mocker, multi_config):
+        ctx = mocker.Mock()
+        ctx.request_context.lifespan_context.instances = multi_config
+        ctx.request_context.lifespan_context.jenkins_session_singleton = False
+        ctx.session = mocker.Mock(spec=[])
+        return ctx
+
+    def test_uses_default_instance(self, mock_jenkins_cls, mock_get_http_request, mock_ctx):
+        mock_get_http_request.side_effect = RuntimeError('No HTTP')
+
+        jenkins(mock_ctx)
+
+        mock_jenkins_cls.assert_called_once_with(
+            url='https://prod.example.com',
+            username='prod_user',
+            password='prod_pass',
+            timeout=5,
+            verify_ssl=True,
+        )
+
+    def test_uses_explicit_instance(self, mock_jenkins_cls, mock_get_http_request, mock_ctx):
+        mock_get_http_request.side_effect = RuntimeError('No HTTP')
+
+        jenkins(mock_ctx, instance='dev')
+
+        mock_jenkins_cls.assert_called_once_with(
+            url='https://dev.example.com',
+            username='dev_user',
+            password='dev_pass',
+            timeout=10,
+            verify_ssl=True,
+        )
+
+    def test_unknown_instance_raises(self, mock_get_http_request, mock_ctx):
+        mock_get_http_request.side_effect = RuntimeError('No HTTP')
+
+        with pytest.raises(ValueError, match="Unknown Jenkins instance 'nonexistent'"):
+            jenkins(mock_ctx, instance='nonexistent')
+
+    def test_instance_from_http_header(self, mock_jenkins_cls, mock_get_http_request, mock_ctx, mocker):
+        mock_get_http_request.return_value = mocker.Mock(state=mocker.Mock(jenkins_instance='dev'))
+
+        jenkins(mock_ctx)
+
+        mock_jenkins_cls.assert_called_once_with(
+            url='https://dev.example.com',
+            username='dev_user',
+            password='dev_pass',
+            timeout=10,
+            verify_ssl=True,
+        )
+
+    def test_explicit_instance_overrides_header(self, mock_jenkins_cls, mock_get_http_request, mock_ctx, mocker):
+        mock_get_http_request.return_value = mocker.Mock(state=mocker.Mock(jenkins_instance='dev'))
+
+        jenkins(mock_ctx, instance='prod')
+
+        mock_jenkins_cls.assert_called_once_with(
+            url='https://prod.example.com',
+            username='prod_user',
+            password='prod_pass',
+            timeout=5,
+            verify_ssl=True,
+        )
+
+    def test_session_cache_per_instance(self, mock_jenkins_cls, mock_get_http_request, mock_ctx, mocker):
+        mock_get_http_request.side_effect = RuntimeError('No HTTP')
+        mock_ctx.request_context.lifespan_context.jenkins_session_singleton = True
+
+        # First call creates the client
+        client1 = jenkins(mock_ctx, instance='prod')
+        assert mock_jenkins_cls.call_count == 1
+
+        # Second call returns cached
+        client2 = jenkins(mock_ctx, instance='prod')
+        assert mock_jenkins_cls.call_count == 1
+        assert client1 == client2
+
+        # Different instance creates new client
+        jenkins(mock_ctx, instance='dev')
+        assert mock_jenkins_cls.call_count == 2

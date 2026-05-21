@@ -44,6 +44,12 @@ if sys.platform == 'win32':
     'significantly reducing the number of instantiations and crumb requests',
 )
 @click.option(
+    '--config-file',
+    type=click.Path(exists=False),
+    default=None,
+    help='Path to multi-instance YAML config file (e.g. ~/.mcp_jenkins/instances.yaml)',
+)
+@click.option(
     '--transport',
     type=click.Choice(['stdio', 'sse', 'streamable-http']),
     default='stdio',
@@ -67,10 +73,13 @@ def main(
     read_only: bool,  # noqa: FBT001
     tool_regex: str,
     jenkins_session_singleton: bool,  # noqa: FBT001
+    config_file: str | None,
     transport: str,
     host: str,
     port: int,
 ) -> None:
+    if config_file:
+        os.environ['MCP_JENKINS_CONFIG'] = str(config_file)
     if jenkins_url:
         os.environ['jenkins_url'] = jenkins_url
     if jenkins_username:

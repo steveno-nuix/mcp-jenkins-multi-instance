@@ -5,17 +5,20 @@ from mcp_jenkins.server import mcp
 
 
 @mcp.tool(tags=['read'])
-async def get_all_views(ctx: Context) -> list[dict]:
+async def get_all_views(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all top-level views from Jenkins.
+
+    Args:
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         A list of views with their name and URL.
     """
-    return jenkins(ctx).get_views()
+    return jenkins(ctx, instance=instance).get_views()
 
 
 @mcp.tool(tags=['read'])
-async def get_view(ctx: Context, view_path: str, depth: int = 0) -> dict:
+async def get_view(ctx: Context, view_path: str, depth: int = 0, instance: str | None = None) -> dict:
     """Get a Jenkins view by path, returning its jobs and/or nested sub-views.
 
     Views can be nested up to multiple levels deep. Use "/" to separate levels
@@ -27,8 +30,9 @@ async def get_view(ctx: Context, view_path: str, depth: int = 0) -> dict:
                    Examples: "All", "frontend", "frontend/nightly".
                    Spaces and special characters in view names are handled automatically.
         depth: Depth of detail to retrieve for each job. Default is 0.
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         A dict with the view's name, jobs list, and/or nested views.
     """
-    return jenkins(ctx).get_view(view_path=view_path, depth=depth)
+    return jenkins(ctx, instance=instance).get_view(view_path=view_path, depth=depth)

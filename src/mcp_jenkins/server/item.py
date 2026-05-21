@@ -8,50 +8,56 @@ from mcp_jenkins.server import mcp
 
 
 @mcp.tool(tags=['read'])
-async def get_all_items(ctx: Context) -> list[dict]:
+async def get_all_items(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all items from Jenkins
+
+    Args:
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         A list of items
     """
-    return [item.model_dump(exclude_none=True) for item in jenkins(ctx).get_items()]
+    return [item.model_dump(exclude_none=True) for item in jenkins(ctx, instance=instance).get_items()]
 
 
 @mcp.tool(tags=['read'])
-async def get_item(ctx: Context, fullname: str) -> dict:
+async def get_item(ctx: Context, fullname: str, instance: str | None = None) -> dict:
     """Get specific item from Jenkins
 
     Args:
         fullname: The fullname of the item
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         The item
     """
-    return jenkins(ctx).get_item(fullname=fullname).model_dump(exclude_none=True)
+    return jenkins(ctx, instance=instance).get_item(fullname=fullname).model_dump(exclude_none=True)
 
 
 @mcp.tool(tags=['read'])
-async def get_item_config(ctx: Context, fullname: str) -> str:
+async def get_item_config(ctx: Context, fullname: str, instance: str | None = None) -> str:
     """Get specific item config from Jenkins
 
     Args:
         fullname: The fullname of the item
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         The config of the item
     """
-    return jenkins(ctx).get_item_config(fullname=fullname)
+    return jenkins(ctx, instance=instance).get_item_config(fullname=fullname)
 
 
 @mcp.tool(tags=['write'])
-async def set_item_config(ctx: Context, fullname: str, config_xml: str) -> None:
+async def set_item_config(ctx: Context, fullname: str, config_xml: str, instance: str | None = None) -> None:
     """Set specific item config in Jenkins
 
     Args:
         fullname: The fullname of the item
         config_xml: The config XML of the item
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
     """
-    jenkins(ctx).set_item_config(fullname=fullname, config_xml=config_xml)
+    jenkins(ctx, instance=instance).set_item_config(fullname=fullname, config_xml=config_xml)
 
 
 @mcp.tool(tags=['read'])
@@ -61,6 +67,7 @@ async def query_items(
     fullname_pattern: str = None,
     color_pattern: str = None,
     folder_depth: int | None = None,
+    instance: str | None = None,
 ) -> list[dict]:
     """Query items from Jenkins
 
@@ -69,13 +76,14 @@ async def query_items(
         fullname_pattern: The pattern of the fullname
         color_pattern: The pattern of the color
         folder_depth: The maximum depth of folders to traverse. If None, traverses all levels.
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         A list of items
     """
     return [
         item.model_dump(exclude_none=True)
-        for item in jenkins(ctx).query_items(
+        for item in jenkins(ctx, instance=instance).query_items(
             class_pattern=class_pattern,
             fullname_pattern=fullname_pattern,
             color_pattern=color_pattern,
@@ -90,6 +98,7 @@ async def build_item(
     fullname: str,
     build_type: Literal['build', 'buildWithParameters'],
     data: dict | None = None,
+    instance: str | None = None,
 ) -> int:
     """Build an item in Jenkins
 
@@ -97,24 +106,26 @@ async def build_item(
         fullname: The fullname of the item
         data: The parameters to trigger the build with. Required if build_type is 'buildWithParameters'.
         build_type: If your item is configured with parameters, you must use 'buildWithParameters' as build_type.
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         The queue item number of the item.
     """
-    return jenkins(ctx).build_item(fullname=fullname, build_type=build_type, data=data)
+    return jenkins(ctx, instance=instance).build_item(fullname=fullname, build_type=build_type, data=data)
 
 
 @mcp.tool(tags=['read'])
-async def get_item_parameters(ctx: Context, fullname: str) -> list[dict]:
+async def get_item_parameters(ctx: Context, fullname: str, instance: str | None = None) -> list[dict]:
     """Get the parameter definitions of a Jenkins job
 
     Args:
         fullname: The fullname of the item
+        instance: Name of the Jenkins instance to target. If omitted, uses the configured default.
 
     Returns:
         A list of parameter definitions, each containing name, type, defaultValue, and description
     """
-    config_xml = jenkins(ctx).get_item_config(fullname=fullname)
+    config_xml = jenkins(ctx, instance=instance).get_item_config(fullname=fullname)
     root = ET.fromstring(config_xml)
 
     params = []
