@@ -1,35 +1,43 @@
 # MCP Jenkins
-![PyPI Version](https://img.shields.io/pypi/v/mcp-jenkins)
-[![PyPI Downloads](https://static.pepy.tech/badge/mcp-jenkins)](https://pepy.tech/projects/mcp-jenkins)
-[![test](https://github.com/lanbaoshen/mcp-jenkins/actions/workflows/test.yml/badge.svg)](https://github.com/lanbaoshen/mcp-jenkins/actions/workflows/test.yml/badge.svg)
-[![codecov](https://codecov.io/gh/lanbaoshen/mcp-jenkins/branch/master/graph/badge.svg)](https://codecov.io/gh/lanbaoshen/mcp-jenkins)
-![License](https://img.shields.io/github/license/lanbaoshen/mcp-jenkins)
+
+A fork of [mcp-jenkins](https://github.com/lanbaoshen/mcp-jenkins) with added support for multiple named Jenkins instances.
 
 The Model Context Protocol (MCP) is an open-source implementation that bridges Jenkins with AI language models following Anthropic's MCP specification. This project enables secure, contextual AI interactions with Jenkins tools while maintaining data privacy and security.
 
 ## Installation
-Choose one of these installation methods:
-```
-# Using uv (recommended)
-pip install uv
-uvx mcp-jenkins
 
-# Using pip
-pip install mcp-jenkins
-mcp-jenkins
+### Prerequisites
 
-# Docker
-docker pull ghcr.io/lanbaoshen/mcp-jenkins:latest
-docker run -p 9887:9887 --rm ghcr.io/lanbaoshen/mcp-jenkins:latest --transport streamable-http
-```
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-## Line Arguments
-When using command line arguments, you can specify the Jenkins server details as follows:
+### Setup
 
 ```shell
-# Simple streamable-http example
-uvx mcp-jenkins --transport streamable-http
+# Clone the repo
+git clone https://github.com/steven-lizzi/mcp-jenkins-multi-instance.git
+cd mcp-jenkins-multi-instance
+
+# Install dependencies
+uv sync
 ```
+
+### Running the server
+
+```shell
+# Single instance (stdio, for use with Copilot/Claude Desktop)
+uv run mcp-jenkins --jenkins-url https://jenkins.example.com --jenkins-username alice --jenkins-password <api-token>
+
+# Multi-instance (streamable-http)
+uv run mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --transport streamable-http
+
+# Read-only mode
+uv run mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --read-only --transport streamable-http
+```
+
+## CLI Arguments
+| Argument                                                     | Description                                                                                                     | Required |
+|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|----------|
 
 | Argument                                                     | Description                                                                                                     | Required |
 |--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|----------|
@@ -39,6 +47,7 @@ uvx mcp-jenkins --transport streamable-http
 | `--jenkins-timeout`                                          | Timeout for Jenkins API requests in seconds. Default is `5` seconds.                                            | No       |
 | `--jenkins-verify-ssl/--no-jenkins-verify-ssl`               | Whether to verify SSL certificates when connecting to Jenkins. Default is to verify.                            | No       |
 | `--jenkins-session-singleton/--no-jenkins-session-singleton` | Whether to use a singleton Jenkins client for all requests in the same session. Default is True.                | No       |
+| `--config-file`                                              | Path to a YAML file defining multiple named Jenkins instances. Activates multi-instance mode.                   | No       |
 | `--read-only`                                                | Whether to enable read-only mode. Default is False                                                              | No       |
 | `--transport`                                                | Transport method to use for communication. Options are `stdio`, `sse` or `streamable-http`. Default is `stdio`. | No       |
 | `--host`                                                     | Host address for `streamable-http` transport. Default is `0.0.0.0`                                              | No       |
@@ -55,12 +64,11 @@ uvx mcp-jenkins --transport streamable-http
   "servers": {
     "my-mcp-server": {
       "type": "stdio",
-      "command": "uvx",
+      "command": "uv",
       "args": [
-        "mcp-jenkins",
-        "--jenkins-url=xxx",
-        "--jenkins-username=xxx",
-        "--jenkins-password=xxx"
+        "--directory", "/path/to/mcp-jenkins-multi-instance",
+        "run", "mcp-jenkins",
+        "--config-file", "/path/to/instances.yaml"
       ]
     }
   }
@@ -98,18 +106,75 @@ uvx mcp-jenkins --transport streamable-http
 
 Run the Jenkins MCP server with the following command:
 ```shell
-uvx mcp-jenkins \
+# Single instance
+uv run mcp-jenkins \
   --jenkins-url xxx \
-  --jenkins-username xxx  \
+  --jenkins-username xxx \
   --jenkins-password xxx \
   --transport sse
+
+# Multi-instance
+uv run mcp-jenkins \
+  --config-file ~/.mcp_jenkins/instances.yaml \
+  --transport sse
 ```
+
+## Multi-Instance Support
+
+You can connect to multiple Jenkins instances simultaneously using a YAML configuration file.
+
+### Config file format
+
+```yaml
+# ~/.mcp_jenkins/instances.yaml
+default: discover
+
+instances:
+  discover:
+    url: https://jenkins-discover.example.com
+    username: alice
+    password: api-token-discover
+
+  analytics:
+    url: https://jenkins-analytics.example.com
+    username: bob
+    password: api-token-analytics
+    timeout: 10        # optional, default 5
+    verify_ssl: false  # optional, default true
+```
+
+### Starting in multi-instance mode
+
+```shell
+uvx mcp-jenkins --config-file ~/.mcp_jenkins/instances.yaml --transport streamable-http
+```
+
+All existing single-instance CLI flags (`--jenkins-url`, etc.) continue to work without a config file.
+
+### Targeting a specific instance
+
+Every tool accepts an optional `instance` parameter. When omitted, the configured `default` instance is used.
+
+```
+# List all configured instances
+list_instances()
+
+# Target a specific instance
+get_all_items(instance="analytics")
+get_build(fullname="my-job", instance="discover")
+```
+
+For HTTP transports, the instance can also be selected via the `x-jenkins-instance` request header.
+
+> **Security note:** Store your config file with restricted permissions (`chmod 600 ~/.mcp_jenkins/instances.yaml`) since it contains credentials.
 
 ## Available Tools
 | Tool                       | Description                                         |
 |----------------------------|-----------------------------------------------------|
+| `list_instances`           | List all configured Jenkins instances and the default. |
 | `get_item`                 | Get a specific item by name.                        |
 | `get_item_config`          | Get the configuration of a specific item.           |
+| `set_item_config`          | Set the configuration of a specific item.           |
 | `get_item_parameters`      | Get the parameters of a specific item.              |
 | `get_all_items`            | Get all items in Jenkins.                           |
 | `query_items`              | Query items based on pattern.                       |
@@ -117,6 +182,7 @@ uvx mcp-jenkins \
 | `get_all_nodes`            | Get all nodes in Jenkins.                           |
 | `get_node`                 | Get a specific node by name.                        |
 | `get_node_config`          | Get the configuration of a specific node.           |
+| `set_node_config`          | Set the configuration of a specific node.           |
 | `get_all_queue_items`      | Get all queue items in Jenkins.                     |
 | `get_queue_item`           | Get a specific queue item by ID.                    |
 | `cancel_queue_item`        | Cancel a specific queue item by ID.                 |
@@ -131,7 +197,15 @@ uvx mcp-jenkins \
 | `get_build_artifact`       | Download an artifact from a specific build.         |
 | `get_build_artifact_url`   | Get the direct URL of an artifact from a specific build. |
 | `get_view`                 | Get a specific view by name.                        |
-| `get_all_views`            | Get the configuration of a specific view.           |
+| `get_all_views`            | Get all top-level views from Jenkins.               |
+| `get_all_plugins`          | Get all installed plugins.                          |
+| `get_plugin`               | Get a specific plugin by short name.                |
+| `get_plugins_with_problems`| Get all plugins with configuration problems.        |
+| `get_plugins_with_backup`  | Get plugins that can be downgraded.                 |
+| `get_plugins_with_updates` | Get plugins that have available updates.            |
+| `get_plugin_dependency_graph` | Get the dependency graph for a specific plugin.  |
+
+All tools accept an optional `instance` parameter to target a specific Jenkins instance when running in multi-instance mode.
 
 
 ## Contributing
