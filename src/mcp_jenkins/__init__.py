@@ -7,7 +7,7 @@ import click
 from loguru import logger
 
 try:
-    from mcp_jenkins.xdg import get_data_dir
+    from mcp_jenkins.xdg import get_config_dir, get_data_dir
 
     LOG_DIR = get_data_dir()
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -46,7 +46,7 @@ except Exception as e:  # noqa: BLE001
 @click.option(
     "--config-file",
     type=click.Path(exists=False),
-    default="~/.config/mcp-jenkins/instances.yaml",
+    default=lambda: str(get_config_dir() / "instances.yaml"),
     help="Path to multi-instance YAML config file (e.g. ~/.config/mcp-jenkins/instances.yaml)",
 )
 @click.option(

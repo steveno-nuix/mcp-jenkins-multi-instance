@@ -33,12 +33,12 @@ mcp = JenkinsMCP("mcp-jenkins", lifespan=lifespan)
 
 # Import tool modules to register them with the MCP server
 # This must happen after mcp is created so the @mcp.tool() decorators can reference it
-from mcp_jenkins.server import (
-    build,
-    instance,
-    item,
-    node,
-    plugin,
-    queue,
-    view,
-)  # noqa: F401, E402
+from mcp_jenkins.server import (  # noqa: E402
+    build,  # noqa: F401
+    instance,  # noqa: F401
+    item,  # noqa: F401
+    node,  # noqa: F401
+    plugin,  # noqa: F401
+    queue,  # noqa: F401
+    view,  # noqa: F401
+)
