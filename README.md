@@ -228,7 +228,7 @@ For HTTP transports, the instance can also be selected via the `x-jenkins-instan
 | `get_plugins_with_updates` | Get plugins that have available updates.            |
 | `get_plugin_dependency_graph` | Get the dependency graph for a specific plugin.  |
 
-All tools accept an optional `instance` parameter to target a specific Jenkins instance when running in multi-instance mode.
+All tools accept an optional `instance` parameter to target a specific Jenkins instance when running in multi-instance mode. The multi-instance parallel tools automatically query all configured instances or a specified subset in parallel for improved performance.
 
 
 ## Contributing

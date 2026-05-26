@@ -1,13 +1,16 @@
 from string import Formatter
+from typing import Any
 
 
 class RestEndpoint(str):
-    def __new__(cls, value: str) -> str:
+    _fields: set[str]
+
+    def __new__(cls, value: str) -> "RestEndpoint":
         obj = str.__new__(cls, value)
         obj._fields = {name for _, name, _, _ in Formatter().parse(value) if name}
         return obj
 
-    def __call__(self, **kwargs: str | int) -> str:
+    def __call__(self, **kwargs: Any) -> str:  # noqa: ANN401
         if missing := self._fields.difference(kwargs):
             raise KeyError(f"Missing: {missing}")
 

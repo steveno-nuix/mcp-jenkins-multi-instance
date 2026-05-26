@@ -7,7 +7,7 @@ from mcp_jenkins.core.lifespan import jenkins
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_all_items(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all items from Jenkins
 
@@ -23,7 +23,7 @@ async def get_all_items(ctx: Context, instance: str | None = None) -> list[dict]
     ]
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_item(ctx: Context, fullname: str, instance: str | None = None) -> dict:
     """Get specific item from Jenkins
 
@@ -41,7 +41,7 @@ async def get_item(ctx: Context, fullname: str, instance: str | None = None) -> 
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_item_config(
     ctx: Context, fullname: str, instance: str | None = None
 ) -> str:
@@ -57,7 +57,7 @@ async def get_item_config(
     return jenkins(ctx, instance=instance).get_item_config(fullname=fullname)
 
 
-@mcp.tool(tags=["write"])
+@mcp.tool(tags={"write"})
 async def set_item_config(
     ctx: Context, fullname: str, config_xml: str, instance: str | None = None
 ) -> None:
@@ -73,7 +73,7 @@ async def set_item_config(
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def query_items(
     ctx: Context,
     class_pattern: str = None,
@@ -105,7 +105,7 @@ async def query_items(
     ]
 
 
-@mcp.tool(tags=["write"])
+@mcp.tool(tags={"write"})
 async def build_item(
     ctx: Context,
     fullname: str,
@@ -129,7 +129,7 @@ async def build_item(
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_item_parameters(
     ctx: Context, fullname: str, instance: str | None = None
 ) -> list[dict]:

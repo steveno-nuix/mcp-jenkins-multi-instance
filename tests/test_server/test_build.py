@@ -1,6 +1,7 @@
 import pytest
 
 from mcp_jenkins.jenkins.model.build import Artifact, Build, BuildReplay
+from mcp_jenkins.jenkins.model.item import Job
 from mcp_jenkins.server import build
 
 
@@ -8,6 +9,19 @@ from mcp_jenkins.server import build
 def mock_jenkins(mocker):
     mock_jenkins = mocker.Mock()
 
+    # Create a proper Job instance for tests that need lastBuild
+    def mock_get_item(*args, **kwargs) -> Job:  # noqa: ANN002, ANN003
+        job = Job(
+            _class="Job",
+            name="job1",
+            url="http://jenkins/job/job1/",
+            fullName="job1",
+            color="blue",
+            lastBuild=Build(number=1, url="1", building=False, timestamp=1234567890),
+        )
+        return job
+
+    mock_jenkins.get_item.side_effect = mock_get_item
     mocker.patch("mcp_jenkins.server.build.jenkins", return_value=mock_jenkins)
 
     yield mock_jenkins
@@ -96,7 +110,16 @@ async def test_get_build_console_output_with_all_params(mock_jenkins, mocker):
 
 @pytest.mark.asyncio
 async def test_get_build_console_output_no_build(mock_jenkins, mocker):
-    mock_jenkins.get_item.return_value.lastBuild.number = None
+    # Override the default mock to return a job with no lastBuild
+    job_no_build = Job(
+        _class="Job",
+        name="job1",
+        url="http://jenkins/job/job1/",
+        fullName="job1",
+        color="blue",
+        lastBuild=None,
+    )
+    mock_jenkins.get_item.side_effect = lambda *args, **kwargs: job_no_build
 
     with pytest.raises(ValueError, match="No build found for job: job1"):
         await build.get_build_console_output(mocker.Mock(), fullname="job1")

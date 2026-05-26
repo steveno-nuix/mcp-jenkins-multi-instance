@@ -37,6 +37,7 @@ from mcp_jenkins.server import (  # noqa: E402
     build,  # noqa: F401
     instance,  # noqa: F401
     item,  # noqa: F401
+    multi_instance,  # noqa: F401
     node,  # noqa: F401
     plugin,  # noqa: F401
     queue,  # noqa: F401

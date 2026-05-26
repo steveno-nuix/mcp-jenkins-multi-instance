@@ -1,4 +1,5 @@
 """Multi-instance parallel query tools for MCP Jenkins."""
+
 import asyncio
 from typing import Any
 
@@ -27,7 +28,9 @@ async def get_all_items_multi_instance(
 
     target_instances = instances or list(lifespan_ctx.instances.instances.keys())
 
-    async def get_items_for_instance(instance_name: str) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
+    async def get_items_for_instance(
+        instance_name: str,
+    ) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
         try:
             items = [
                 item.model_dump(exclude_none=True)
@@ -64,7 +67,9 @@ async def get_running_builds_multi_instance(
 
     target_instances = instances or list(lifespan_ctx.instances.instances.keys())
 
-    async def get_builds_for_instance(instance_name: str) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
+    async def get_builds_for_instance(
+        instance_name: str,
+    ) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
         try:
             builds = [
                 build.model_dump(exclude_none=True)
@@ -101,7 +106,9 @@ async def get_all_nodes_multi_instance(
 
     target_instances = instances or list(lifespan_ctx.instances.instances.keys())
 
-    async def get_nodes_for_instance(instance_name: str) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
+    async def get_nodes_for_instance(
+        instance_name: str,
+    ) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
         try:
             nodes = [
                 node.model_dump(exclude_none=True)
@@ -138,7 +145,9 @@ async def get_all_queue_items_multi_instance(
 
     target_instances = instances or list(lifespan_ctx.instances.instances.keys())
 
-    async def get_queue_for_instance(instance_name: str) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
+    async def get_queue_for_instance(
+        instance_name: str,
+    ) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
         try:
             queue_items = [
                 item.model_dump(exclude_none=True)
@@ -184,7 +193,9 @@ async def query_items_multi_instance(
 
     target_instances = instances or list(lifespan_ctx.instances.instances.keys())
 
-    async def query_items_for_instance(instance_name: str) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
+    async def query_items_for_instance(
+        instance_name: str,
+    ) -> tuple[str, list[dict[str, Any]] | dict[str, str]]:
         try:
             items = [
                 item.model_dump(exclude_none=True)

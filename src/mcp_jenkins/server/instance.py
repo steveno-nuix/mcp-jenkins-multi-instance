@@ -3,7 +3,7 @@ from fastmcp import Context
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def list_instances(ctx: Context) -> dict:
     """List all configured Jenkins instances and the default.
 
