@@ -16,6 +16,6 @@ class QueueItem(BaseModel):
 
 
 class QueueItemTask(BaseModel):
-    fullDisplayName: str = None
-    name: str = None
-    url: str = None
+    fullDisplayName: str = ""
+    name: str = ""
+    url: str = ""

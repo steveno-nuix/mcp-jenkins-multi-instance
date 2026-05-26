@@ -76,9 +76,9 @@ async def set_item_config(
 @mcp.tool(tags={"read"})
 async def query_items(
     ctx: Context,
-    class_pattern: str = None,
-    fullname_pattern: str = None,
-    color_pattern: str = None,
+    class_pattern: str = "",
+    fullname_pattern: str = "",
+    color_pattern: str = "",
     folder_depth: int | None = None,
     instance: str | None = None,
 ) -> list[dict]:

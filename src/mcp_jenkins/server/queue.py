@@ -4,7 +4,7 @@ from mcp_jenkins.core.lifespan import jenkins
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_all_queue_items(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all items in Jenkins queue
 
@@ -20,7 +20,7 @@ async def get_all_queue_items(ctx: Context, instance: str | None = None) -> list
     ]
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_queue_item(ctx: Context, id: int, instance: str | None = None) -> dict:
     """Get a specific item in Jenkins queue by id
 
@@ -35,7 +35,7 @@ async def get_queue_item(ctx: Context, id: int, instance: str | None = None) -> 
     return item.model_dump(exclude_none=True)
 
 
-@mcp.tool(tags=["write"])
+@mcp.tool(tags={"write"})
 async def cancel_queue_item(ctx: Context, id: int, instance: str | None = None) -> None:
     """Cancel a specific item in Jenkins queue by id
 
