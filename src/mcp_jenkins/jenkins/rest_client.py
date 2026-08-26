@@ -58,10 +58,10 @@ class Jenkins:
         method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"],
         endpoint: str,
         *,
-        data: dict | str = None,
-        headers: dict = None,
+        data: dict | str | None = None,
+        headers: dict | None = None,
         crumb: bool = True,
-        params: dict = None,
+        params: dict | None = None,
     ) -> Response:
         """Send an HTTP request to a Jenkins REST endpoint.
 

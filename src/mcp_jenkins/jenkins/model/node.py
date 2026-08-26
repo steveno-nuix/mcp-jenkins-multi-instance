@@ -15,7 +15,7 @@ class NodeExecutor(BaseModel):
 
 
 class NodeExecutorCurrentExecutable(BaseModel):
-    url: str = None
-    timestamp: int = None
-    number: int = None
-    fullDisplayName: str = None
+    url: str = ""
+    timestamp: int | None = None
+    number: int | None = None
+    fullDisplayName: str = ""

@@ -4,7 +4,7 @@ from mcp_jenkins.core.lifespan import jenkins
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_all_nodes(ctx: Context, instance: str | None = None) -> list[dict]:
     """Get all nodes from Jenkins
 
@@ -20,7 +20,7 @@ async def get_all_nodes(ctx: Context, instance: str | None = None) -> list[dict]
     ]
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_node(ctx: Context, name: str, instance: str | None = None) -> dict:
     """Get a specific node from Jenkins
 
@@ -40,7 +40,7 @@ async def get_node(ctx: Context, name: str, instance: str | None = None) -> dict
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_node_config(ctx: Context, name: str, instance: str | None = None) -> str:
     """Get node config from Jenkins
 
@@ -54,7 +54,7 @@ async def get_node_config(ctx: Context, name: str, instance: str | None = None) 
     return jenkins(ctx, instance=instance).get_node_config(name=name)
 
 
-@mcp.tool(tags=["write"])
+@mcp.tool(tags={"write"})
 async def set_node_config(
     ctx: Context, name: str, config_xml: str, instance: str | None = None
 ) -> None:

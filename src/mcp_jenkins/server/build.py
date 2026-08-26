@@ -1,13 +1,17 @@
 import base64
+from typing import Any
 
 from fastmcp import Context
 
 from mcp_jenkins.core.lifespan import jenkins
+from mcp_jenkins.jenkins.model.item import FreeStyleProject, Job, MultiBranchProject
 from mcp_jenkins.server import mcp
 
 
-@mcp.tool(tags=["read"])
-async def get_running_builds(ctx: Context, instance: str | None = None) -> list[dict]:
+@mcp.tool(tags={"read"})
+async def get_running_builds(
+    ctx: Context, instance: str | None = None
+) -> list[dict[str, Any]]:
     """Get all running builds from Jenkins
 
     Args:
@@ -22,10 +26,10 @@ async def get_running_builds(ctx: Context, instance: str | None = None) -> list[
     ]
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
-) -> dict:
+) -> dict[str, Any]:
     """Get specific build info from Jenkins
 
     Args:
@@ -37,11 +41,16 @@ async def get_build(
         The build info
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     return (
         jenkins(ctx, instance=instance)
@@ -50,7 +59,7 @@ async def get_build(
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build_scripts(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
 ) -> list[str]:
@@ -65,11 +74,16 @@ async def get_build_scripts(
         A list of scripts used in the build
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     return (
         jenkins(ctx, instance=instance)
@@ -78,7 +92,7 @@ async def get_build_scripts(
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build_console_output(
     ctx: Context,
     fullname: str,
@@ -102,23 +116,27 @@ async def get_build_console_output(
         The console output of the build
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
-    if number is None:
-        raise ValueError(f"No build found for job: {fullname}")
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+            and item.lastBuild.number is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No build found for job: {fullname}"
+            raise ValueError(msg)
 
     return jenkins(ctx, instance=instance).get_build_console_output(
         fullname=fullname, number=number, pattern=pattern, offset=offset, limit=limit
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build_test_report(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
-) -> dict:
+) -> dict[str, Any]:
     """Get the test report of a specific build in Jenkins
 
     Args:
@@ -130,21 +148,26 @@ async def get_build_test_report(
         The test report of the build
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     return jenkins(ctx, instance=instance).get_build_test_report(
         fullname=fullname, number=number
     )
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build_parameters(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
-) -> dict:
+) -> dict[str, Any]:
     """Get the parameters of a specific build in Jenkins
 
     Args:
@@ -156,18 +179,23 @@ async def get_build_parameters(
         A dictionary of build parameter names and their values
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     return jenkins(ctx, instance=instance).get_build_parameters(
         fullname=fullname, number=number
     )
 
 
-@mcp.tool(tags=["write"])
+@mcp.tool(tags={"write"})
 async def stop_build(
     ctx: Context, fullname: str, number: int, instance: str | None = None
 ) -> None:
@@ -181,10 +209,10 @@ async def stop_build(
     return jenkins(ctx, instance=instance).stop_build(fullname=fullname, number=number)
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_all_build_artifacts(
     ctx: Context, fullname: str, number: int | None = None, instance: str | None = None
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """List the artifacts of a specific build in Jenkins
 
     Args:
@@ -196,11 +224,16 @@ async def get_all_build_artifacts(
         A list of artifact metadata dicts with fileName, relativePath, and displayPath
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     return [
         artifact.model_dump(exclude_none=True)
@@ -210,14 +243,14 @@ async def get_all_build_artifacts(
     ]
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build_artifact(
     ctx: Context,
     fullname: str,
     relative_path: str,
     number: int | None = None,
     instance: str | None = None,
-) -> dict:
+) -> dict[str, str]:
     """Download an artifact from a specific build in Jenkins
 
     Binary files are returned as base64-encoded content; text files are returned as plain text.
@@ -232,11 +265,16 @@ async def get_build_artifact(
         A dict with 'content' (str) and 'encoding' ('utf-8' or 'base64')
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     content = jenkins(ctx, instance=instance).get_build_artifact(
         fullname=fullname, number=number, relative_path=relative_path
@@ -251,7 +289,7 @@ async def get_build_artifact(
         }
 
 
-@mcp.tool(tags=["read"])
+@mcp.tool(tags={"read"})
 async def get_build_artifact_url(
     ctx: Context,
     fullname: str,
@@ -271,11 +309,16 @@ async def get_build_artifact_url(
         The direct Jenkins URL of the artifact
     """
     if number is None:
-        number = (
-            jenkins(ctx, instance=instance)
-            .get_item(fullname=fullname, depth=1)
-            .lastBuild.number
-        )
+        item = jenkins(ctx, instance=instance).get_item(fullname=fullname, depth=1)
+        # Type guard to ensure we have a job type with lastBuild
+        if (
+            isinstance(item, (Job, FreeStyleProject, MultiBranchProject))
+            and item.lastBuild is not None
+        ):
+            number = item.lastBuild.number
+        else:
+            msg = f"No builds found for job '{fullname}'"
+            raise ValueError(msg)
 
     return jenkins(ctx, instance=instance).get_build_artifact_url(
         fullname=fullname, number=number, relative_path=relative_path
